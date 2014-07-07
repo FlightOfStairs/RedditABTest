@@ -1,0 +1,58 @@
+```{r}
+library(ggplot2)
+
+records <- read.table("scores.csv", sep=",", header=T)
+```
+
+Normalise data; undo original vote.
+
+```{r}
+records$score <- records$score - sapply(records$vote, function(vote) {
+  if(vote == "UP") return(1)
+  if(vote == "DOWN") return(-1)
+  return(0)
+})
+```
+
+Summary
+=
+
+```{r}
+tapply(records$score, records$vote, length)
+tapply(records$score, records$vote, summary)
+```
+
+% Records having score >= x
+=
+There doesn't appear to be much of an effect here... strange
+
+```{r}
+percentageMoreThan <- function(x) {
+  high_score_records <- records[records$score >= x,]
+  tapply(high_score_records$score, high_score_records$vote, length) / tapply(records$id, records$vote, length) * 100
+}
+
+percentageMoreThan(3)
+percentageMoreThan(5)
+percentageMoreThan(10)
+percentageMoreThan(20)
+percentageMoreThan(100)
+```
+
+Distributions
+=
+
+In this case it's easy to see that posts which have been upvoted are skewed to the left, but there seems to be little difference between posts that have been downvoted and ignored posts.
+
+```{r fig.width=10}
+ggplot(records, aes(x=score, colour=vote)) +
+  geom_density() +
+  xlim(0, 100)
+```
+
+```{r fig.width=10, fig.height=10}
+ggplot(records, aes(x=vote, y=score)) +
+  geom_violin() +
+  ylim(0, 50)
+
+```
